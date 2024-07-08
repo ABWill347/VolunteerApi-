@@ -48,24 +48,24 @@ public class LocationService {
         Optional<Location> optionalLocation = locationRepository.findById(id);
         if (optionalLocation.isPresent()) {
             Location existingLocation = optionalLocation.get();
-            if (updatedLocation.getName() != null) {
-                existingLocation.setName(updatedLocation.getName());
-            }
-            if (updatedLocation.getDate() != null) {
-                existingLocation.setDate(updatedLocation.getDate());
-            }
-            if (updatedLocation.getTime() != null) {
-                existingLocation.setTime(updatedLocation.getTime());
-            }
-            if (updatedLocation.getPhone() != null) {
-                existingLocation.setPhone(updatedLocation.getPhone());
-            }
-
+            if (updatedLocation.getName() == null || updatedLocation.getName().isEmpty()) {
+                throw new ServiceException("Location name cannot be empty.", HttpStatus.BAD_REQUEST);
+            }existingLocation.setName(updatedLocation.getName());
+            if (updatedLocation.getDate() == null) {
+                throw new ServiceException("Location date cannot be null.", HttpStatus.BAD_REQUEST);
+            }existingLocation.setDate(updatedLocation.getDate());
+            if (updatedLocation.getTime() == null) {
+                throw new ServiceException("Location time cannot be null.", HttpStatus.BAD_REQUEST);
+            }existingLocation.setTime(updatedLocation.getTime());
+            if (updatedLocation.getPhone() == null || updatedLocation.getPhone().isEmpty()) {
+                throw new ServiceException("Location phone cannot be empty.", HttpStatus.BAD_REQUEST);
+            }existingLocation.setPhone(updatedLocation.getPhone());
             return locationRepository.save(existingLocation);
         } else {
             throw new ServiceException("Location not found.", HttpStatus.NOT_FOUND);
         }
     }
+
 
 
 

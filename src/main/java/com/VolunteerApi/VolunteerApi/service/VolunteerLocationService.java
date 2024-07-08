@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class VolunteerLocationService {
@@ -31,15 +32,19 @@ public class VolunteerLocationService {
 
     @Transactional
     public void assignVolunteerToLocation(Long volunteerId, Long locationId) {
-        Volunteer volunteer = volunteerService.getVolunteerById(volunteerId)
-                .orElseThrow(() -> new ServiceException("Volunteer not found.", HttpStatus.NOT_FOUND));
-
-        Location location = locationService.getLocationById(locationId)
-                .orElseThrow(() -> new ServiceException("Location not found.", HttpStatus.NOT_FOUND));
-
+        Optional<Volunteer> optionalVolunteer = volunteerService.getVolunteerById(volunteerId);
+        if (optionalVolunteer.isEmpty()) {
+            throw new ServiceException("Volunteer not found.", HttpStatus.NOT_FOUND);
+        }Optional<Location> optionalLocation = locationService.getLocationById(locationId);
+        if (optionalLocation.isEmpty()) {
+            throw new ServiceException("Location not found.", HttpStatus.NOT_FOUND);
+        }Volunteer volunteer = optionalVolunteer.get();
+        Location location = optionalLocation.get();
         VolunteerLocation volunteerLocation = new VolunteerLocation(volunteer, location);
         volunteerLocationRepository.save(volunteerLocation);
     }
+
+
 
 
     public List<VolunteerLocation> getVolunteerLocations(Long volunteerId) {
@@ -53,30 +58,19 @@ public class VolunteerLocationService {
 
     public void removeVolunteerFromLocation(Long volunteerId, Long locationId) {
         try {
-            // Validate volunteerId and locationId
             if (volunteerId == null) {
                 throw new ServiceException("Volunteer id cannot be null.", HttpStatus.BAD_REQUEST);
-            }
-            if (locationId == null) {
+            }if (locationId == null) {
                 throw new ServiceException("Location id cannot be null.", HttpStatus.BAD_REQUEST);
-            }
-
-            // Check if volunteer exists
-            Volunteer volunteer = volunteerService.getVolunteerById(volunteerId)
+            }Volunteer volunteer = volunteerService.getVolunteerById(volunteerId)
                     .orElseThrow(() -> new ServiceException("Volunteer not found for id: " + volunteerId, HttpStatus.NOT_FOUND));
 
-            // Check if location exists
-            // Note: This assumes locationService.getLocationById(locationId) returns an Optional<Location>
             locationService.getLocationById(locationId)
                     .orElseThrow(() -> new ServiceException("Location not found for id: " + locationId, HttpStatus.NOT_FOUND));
-
-            // Remove volunteer from location
             volunteerLocationRepository.deleteByVolunteerIdAndLocationId(volunteerId, locationId);
         } catch (ServiceException e) {
-            // Rethrow ServiceException to be handled by ControllerAdvice
             throw e;
         } catch (Exception e) {
-            // Catch any unexpected exceptions and wrap them in a ServiceException with 500 status
             throw new ServiceException("Internal Server Error", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

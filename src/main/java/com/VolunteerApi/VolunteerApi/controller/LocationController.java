@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 public class LocationController {
@@ -39,9 +40,12 @@ public class LocationController {
     @GetMapping("/locations/{id}")
     public ResponseEntity<Object> getLocationById(@PathVariable Long id) {
         try {
-            Location location = locationService.getLocationById(id)
-                    .orElseThrow(() -> new ServiceException("Location not found", HttpStatus.NOT_FOUND));
-            return ResponseEntity.ok(location);
+            Optional<Location> location = locationService.getLocationById(id);
+            if (location.isPresent()) {
+                return ResponseEntity.ok(location);
+            } else {
+                throw new ServiceException("Location not found", HttpStatus.NOT_FOUND);
+            }
         } catch (ServiceException e) {
             return ResponseEntity.status(e.getStatus()).body(e.getMessage());
         }
